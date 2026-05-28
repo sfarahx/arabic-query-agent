@@ -1,0 +1,7 @@
+
+        Remote Work Policy:
+        Employees in Engineering are eligible for 3 remote days per week.
+        Employees in HR must be on-site at least 4 days per week.
+        Employees in Finance are not eligible for remote work.
+        All remote work requests must be approved by the department head.
+        

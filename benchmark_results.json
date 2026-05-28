@@ -1,0 +1,85 @@
+{
+  "accuracy": 100.0,
+  "correct": 13,
+  "total": 13,
+  "results": [
+    {
+      "query": "كم عدد الموظفين في قسم الهندسة؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true
+    },
+    {
+      "query": "ما هو راتب سارة الخالدي؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true
+    },
+    {
+      "query": "كم عدد الموظفين الذين يتقاضون أكثر من 10000؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true
+    },
+    {
+      "query": "ما هي الأقسام الموجودة في الشركة؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true
+    },
+    {
+      "query": "من هو الموظف الأعلى راتباً؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true
+    },
+    {
+      "query": "هل يمكن للموظفين العمل عن بُعد؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true
+    },
+    {
+      "query": "كم يوماً يمكن لموظفي الهندسة العمل من المنزل؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true
+    },
+    {
+      "query": "من يوافق على طلبات العمل عن بُعد؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true
+    },
+    {
+      "query": "هل قسم المالية مؤهل للعمل عن بُعد؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true
+    },
+    {
+      "query": "ما هي سياسة الحضور لقسم الموارد البشرية؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true
+    },
+    {
+      "query": "كم عدد موظفي الهندسة وما هي سياسة عملهم عن بُعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true
+    },
+    {
+      "query": "ما هو راتب موظفي المالية وهل يحق لهم العمل عن بُعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true
+    },
+    {
+      "query": "كم عدد الموظفين في قسم الموارد البشرية وكم يوماً يجب أن يكونوا في المكتب؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true
+    }
+  ]
+}
