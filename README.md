@@ -46,12 +46,3 @@ arabic-query-agent/
    ```bash
    streamlit run app.py
    ```
-
-## Benchmark
-
-The router was evaluated on 13 labeled Arabic queries (5 SQL, 5 RAG, 3 Hybrid) and achieved **100% classification accuracy**.
-
-To run the benchmark yourself:
-```bash
-python benchmark.py
-```
