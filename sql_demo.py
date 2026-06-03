@@ -31,17 +31,34 @@ def _setup_database():
     conn.commit()
     conn.close()
 
+_llm = ChatGroq(
+    model="llama3-70b-8192",
+    groq_api_key=os.getenv("GROQ_API_KEY"),
+    temperature=0
+)
+
 def _create_agent():
     _setup_database()
     db = SQLDatabase.from_uri("sqlite:///company.db")
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
-    return create_sql_agent(llm=llm, db=db, verbose=True, handle_parsing_errors=True)
+    return create_sql_agent(llm=_llm, db=db, verbose=False, handle_parsing_errors=True)
 
 # Create agent once at module level so it's not recreated on every call
 _agent = _create_agent()
 
 def run_sql_agent(query: str) -> str:
-    response = _agent.invoke(query)
+    transliterate_prompt = f"""Translate the following query to English.
+- Translate all text including proper nouns and names
+- For names, use their standard English transliteration
+- Preserve the original meaning exactly
+- Return only the translated query, nothing else
+
+Query: {query}"""
+    
+    transliterated = _llm.invoke(transliterate_prompt).content.strip()
+    print(f"[SQL] Transliterated query: {transliterated}")
+    
+    response = _agent.invoke(transliterated)
+    print(f"[SQL] Raw response: {response}")
     return response["output"]
 
     

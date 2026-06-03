@@ -1,4 +1,8 @@
 
+        Work Week Policy:
+        The standard work week runs from Sunday to Thursday.
+        Friday and Saturday are the official weekend days.
+
         Remote Work Policy:
         Employees in Engineering are eligible for 3 remote days per week.
         Employees in HR must be on-site at least 4 days per week.

@@ -5,7 +5,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
@@ -13,6 +12,10 @@ load_dotenv()
 def _setup_documents():
     with open("policy.txt", "w", encoding="utf-8") as f:
         f.write("""
+        Work Week Policy:
+        The standard work week runs from Sunday to Thursday.
+        Friday and Saturday are the official weekend days.
+
         Remote Work Policy:
         Employees in Engineering are eligible for 3 remote days per week.
         Employees in HR must be on-site at least 4 days per week.
@@ -20,7 +23,7 @@ def _setup_documents():
         All remote work requests must be approved by the department head.
         """)
 
-def _create_chain():
+def _create_retriever():
     _setup_documents()
 
     loader = TextLoader("policy.txt", encoding="utf-8")
@@ -30,23 +33,41 @@ def _create_chain():
 
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = Chroma.from_documents(chunks, embeddings)
-    retriever = vectorstore.as_retriever()
+    return vectorstore.as_retriever()
 
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0,)
+# Create retriever once at module level
+_retriever = _create_retriever()
+_llm = ChatGroq(
+    model="llama3-70b-8192",
+    groq_api_key=os.getenv("GROQ_API_KEY"),
+    temperature=0
+)
 
-    prompt = ChatPromptTemplate.from_template("""
+_answer_prompt = ChatPromptTemplate.from_template("""
 Answer the question based only on the following context:
 {context}
 
 Question: {question}
 """)
 
-    return {"context": retriever, "question": RunnablePassthrough()} | prompt | llm
-
-# Create chain once at module level so it's not recreated on every call
-_chain = _create_chain()
-
 def run_rag_agent(query: str) -> str:
-    response = _chain.invoke(query)
-    return response.content
+    # Step 1: Translate query to English for retrieval.
+    # The embedding model (all-MiniLM-L6-v2) is English-only — passing Arabic
+    # text directly produces meaningless embeddings and wrong chunk retrieval.
+    translate_prompt = f"""Translate the following query to English. Return only the translated text, nothing else.
 
+Query: {query}"""
+    english_query = _llm.invoke(translate_prompt).content.strip()
+    print(f"[RAG] Translated query for retrieval: {english_query}")
+
+    # Step 2: Retrieve using English query so embeddings align with policy chunks
+    docs = _retriever.invoke(english_query)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    print(f"[RAG] Retrieved context:\n{context}")
+
+    # Step 3: Answer in the original language (Arabic query preserved here)
+    response = (_answer_prompt | _llm).invoke({
+        "context": context,
+        "question": query
+    })
+    return response.content
