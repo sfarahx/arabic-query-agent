@@ -31,17 +31,17 @@ def _create_retriever():
     splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
     chunks = splitter.split_documents(documents)
 
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Multilingual model — supports Arabic, English, and mixed documents natively.
+    # No translation step needed before retrieval.
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
     vectorstore = Chroma.from_documents(chunks, embeddings)
     return vectorstore.as_retriever()
 
 # Create retriever once at module level
 _retriever = _create_retriever()
-_llm = ChatGroq(
-    model="llama3-70b-8192",
-    groq_api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0
-)
+_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 _answer_prompt = ChatPromptTemplate.from_template("""
 Answer the question based only on the following context:
@@ -51,21 +51,17 @@ Question: {question}
 """)
 
 def run_rag_agent(query: str) -> str:
-    # Step 1: Translate query to English for retrieval.
-    # The embedding model (all-MiniLM-L6-v2) is English-only — passing Arabic
-    # text directly produces meaningless embeddings and wrong chunk retrieval.
-    translate_prompt = f"""Translate the following query to English. Return only the translated text, nothing else.
+    # Retrieve directly using the original query — no translation needed.
+    # paraphrase-multilingual-MiniLM-L12-v2 handles Arabic queries natively.
+    docs = _retriever.invoke(query)
 
-Query: {query}"""
-    english_query = _llm.invoke(translate_prompt).content.strip()
-    print(f"[RAG] Translated query for retrieval: {english_query}")
+    if not docs:
+        print("[RAG] No relevant documents retrieved")
+        return "لم يتم العثور على سياسة ذات صلة بهذا السؤال."
 
-    # Step 2: Retrieve using English query so embeddings align with policy chunks
-    docs = _retriever.invoke(english_query)
     context = "\n\n".join([doc.page_content for doc in docs])
     print(f"[RAG] Retrieved context:\n{context}")
 
-    # Step 3: Answer in the original language (Arabic query preserved here)
     response = (_answer_prompt | _llm).invoke({
         "context": context,
         "question": query

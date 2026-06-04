@@ -31,11 +31,7 @@ def _setup_database():
     conn.commit()
     conn.close()
 
-_llm = ChatGroq(
-    model="llama3-70b-8192",
-    groq_api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0
-)
+_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 def _create_agent():
     _setup_database()
@@ -46,19 +42,32 @@ def _create_agent():
 _agent = _create_agent()
 
 def run_sql_agent(query: str) -> str:
-    transliterate_prompt = f"""Translate the following query to English.
+    try:
+        transliterate_prompt = f"""Translate the following query to English.
 - Translate all text including proper nouns and names
 - For names, use their standard English transliteration
 - Preserve the original meaning exactly
 - Return only the translated query, nothing else
 
 Query: {query}"""
-    
-    transliterated = _llm.invoke(transliterate_prompt).content.strip()
-    print(f"[SQL] Transliterated query: {transliterated}")
-    
-    response = _agent.invoke(transliterated)
-    print(f"[SQL] Raw response: {response}")
-    return response["output"]
 
-    
+        transliterated = _llm.invoke(transliterate_prompt).content.strip()
+        print(f"[SQL] Transliterated query: {transliterated}")
+
+        response = _agent.invoke(transliterated)
+        print(f"[SQL] Raw response: {response}")
+
+        # Safely extract output — agent response structure can vary
+        if isinstance(response, dict):
+            output = response.get("output", "").strip()
+        else:
+            output = str(response).strip()
+
+        if not output:
+            return "لم يتم العثور على نتائج في قاعدة البيانات."
+
+        return output
+
+    except Exception as e:
+        print(f"[SQL] Exception: {type(e).__name__}: {e}")
+        return "لم يتم العثور على نتائج مطابقة في قاعدة البيانات."

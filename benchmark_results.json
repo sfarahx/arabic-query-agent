@@ -1,85 +1,299 @@
 {
-  "accuracy": 100.0,
-  "correct": 13,
-  "total": 13,
+  "overall_accuracy": 100.0,
+  "correct": 38,
+  "total": 38,
+  "by_group": {
+    "basic_sql": {
+      "correct": 6,
+      "total": 6
+    },
+    "basic_rag": {
+      "correct": 5,
+      "total": 5
+    },
+    "basic_hybrid": {
+      "correct": 4,
+      "total": 4
+    },
+    "advanced_sql": {
+      "correct": 8,
+      "total": 8
+    },
+    "advanced_rag": {
+      "correct": 7,
+      "total": 7
+    },
+    "advanced_hybrid": {
+      "correct": 8,
+      "total": 8
+    }
+  },
   "results": [
     {
       "query": "كم عدد الموظفين في قسم الهندسة؟",
       "expected": "SQL",
       "predicted": "SQL",
-      "correct": true
+      "correct": true,
+      "group": "basic_sql"
     },
     {
       "query": "ما هو راتب سارة الخالدي؟",
       "expected": "SQL",
       "predicted": "SQL",
-      "correct": true
+      "correct": true,
+      "group": "basic_sql"
     },
     {
       "query": "كم عدد الموظفين الذين يتقاضون أكثر من 10000؟",
       "expected": "SQL",
       "predicted": "SQL",
-      "correct": true
+      "correct": true,
+      "group": "basic_sql"
     },
     {
       "query": "ما هي الأقسام الموجودة في الشركة؟",
       "expected": "SQL",
       "predicted": "SQL",
-      "correct": true
+      "correct": true,
+      "group": "basic_sql"
     },
     {
-      "query": "من هو الموظف الأعلى راتباً؟",
+      "query": "أعطني قائمة بجميع الموظفين ورواتبهم",
       "expected": "SQL",
       "predicted": "SQL",
-      "correct": true
+      "correct": true,
+      "group": "basic_sql"
+    },
+    {
+      "query": "ما هو متوسط راتب موظفي الشركة؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "basic_sql"
     },
     {
       "query": "هل يمكن للموظفين العمل عن بُعد؟",
       "expected": "RAG",
       "predicted": "RAG",
-      "correct": true
-    },
-    {
-      "query": "كم يوماً يمكن لموظفي الهندسة العمل من المنزل؟",
-      "expected": "RAG",
-      "predicted": "RAG",
-      "correct": true
+      "correct": true,
+      "group": "basic_rag"
     },
     {
       "query": "من يوافق على طلبات العمل عن بُعد؟",
       "expected": "RAG",
       "predicted": "RAG",
-      "correct": true
+      "correct": true,
+      "group": "basic_rag"
+    },
+    {
+      "query": "ما هي سياسة العمل عن بعد لجميع الأقسام؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "basic_rag"
+    },
+    {
+      "query": "هل يحتاج الموظف إلى موافقة مسبقة للعمل عن بعد؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "basic_rag"
+    },
+    {
+      "query": "ما هي أيام عمل الشركة الرسمية؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "basic_rag"
+    },
+    {
+      "query": "هل يسمح لخالد الراشد العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "basic_hybrid"
+    },
+    {
+      "query": "هل يسمح لأحمد المنصوري العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "basic_hybrid"
+    },
+    {
+      "query": "هل يسمح لسارة الخالدي العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "basic_hybrid"
+    },
+    {
+      "query": "هل يسمح لعمر فاروق العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "basic_hybrid"
+    },
+    {
+      "query": "من هو الموظف الأعلى راتباً؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "من هو الموظف الأقل راتباً؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "من يعمل في قسم الهندسة؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "من يعمل في قسم الموارد البشرية؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "هل راتب موظفي الهندسة أعلى من موظفي الموارد البشرية؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "ما هو أعلى راتب في قسم المالية؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "كم عدد الموظفين في كل قسم؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
+    },
+    {
+      "query": "من هو الموظف الأعلى راتباً في قسم الموارد البشرية؟",
+      "expected": "SQL",
+      "predicted": "SQL",
+      "correct": true,
+      "group": "advanced_sql"
     },
     {
       "query": "هل قسم المالية مؤهل للعمل عن بُعد؟",
       "expected": "RAG",
       "predicted": "RAG",
-      "correct": true
+      "correct": true,
+      "group": "advanced_rag"
+    },
+    {
+      "query": "كم يوماً يمكن لموظفي الهندسة العمل من المنزل؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "advanced_rag"
     },
     {
       "query": "ما هي سياسة الحضور لقسم الموارد البشرية؟",
       "expected": "RAG",
       "predicted": "RAG",
-      "correct": true
+      "correct": true,
+      "group": "advanced_rag"
     },
     {
-      "query": "كم عدد موظفي الهندسة وما هي سياسة عملهم عن بُعد؟",
-      "expected": "HYBRID",
-      "predicted": "HYBRID",
-      "correct": true
+      "query": "هل هناك أقسام لا يُسمح لها بالعمل عن بعد إطلاقاً؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "advanced_rag"
     },
     {
-      "query": "ما هو راتب موظفي المالية وهل يحق لهم العمل عن بُعد؟",
-      "expected": "HYBRID",
-      "predicted": "HYBRID",
-      "correct": true
+      "query": "هل يمكن لموظفي الموارد البشرية العمل من المنزل يوم الأحد؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "advanced_rag"
     },
     {
-      "query": "كم عدد الموظفين في قسم الموارد البشرية وكم يوماً يجب أن يكونوا في المكتب؟",
+      "query": "هل يمكن لموظفي الهندسة العمل من المنزل طوال أيام الأسبوع؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "advanced_rag"
+    },
+    {
+      "query": "ما الفرق بين سياسة العمل عن بعد لقسم الهندسة وقسم الموارد البشرية؟",
+      "expected": "RAG",
+      "predicted": "RAG",
+      "correct": true,
+      "group": "advanced_rag"
+    },
+    {
+      "query": "من هم الموظفون الذين يستطيعون العمل من المنزل؟",
       "expected": "HYBRID",
       "predicted": "HYBRID",
-      "correct": true
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "كم عدد الموظفين المؤهلين للعمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "من هم الموظفون غير المؤهلين للعمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "هل يمكن لموظفة ليلى حسن العمل من المنزل ثلاثة أيام في الأسبوع؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "هل يمكن لسارة الخالدي العمل من المنزل ثلاثة أيام في الأسبوع؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "هل يملك أحمد المنصوري وعمر فاروق نفس سياسة العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "من لديه المزيد من أيام العمل عن بعد، سارة الخالدي أم أحمد المنصوري؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
+    },
+    {
+      "query": "من هو الموظف الأعلى راتباً في قسم الهندسة وهل يحق له العمل عن بعد؟",
+      "expected": "HYBRID",
+      "predicted": "HYBRID",
+      "correct": true,
+      "group": "advanced_hybrid"
     }
   ]
 }

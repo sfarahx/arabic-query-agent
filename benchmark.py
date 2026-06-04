@@ -1,152 +1,177 @@
 import json
-from router import route
 from router import classify_query
 
 # ─────────────────────────────────────────────────────────────
-# Benchmark query set
-# Organised into:
-#   - original (kept for regression)
-#   - hard (new stress-test cases targeting real failure modes)
+# Benchmark — Arabic Query Router
 #
-# Hard case design rationale per category:
-#   SQL  : questions whose answer IS a person's name — classifier
-#          previously confused these with HYBRID
-#   RAG  : questions that mention a department name but ask about
-#          policy only — no specific individual involved
-#   HYBRID: reverse direction (policy → find who qualifies),
-#           multi-step reasoning, indirect phrasing
+# Groups:
+#   basic_sql    — clear data questions, unambiguous
+#   basic_rag    — clear policy questions, unambiguous
+#   basic_hybrid — clear person + policy questions
+#   advanced_sql — looks like HYBRID but is pure data
+#   advanced_rag — mentions departments/people but is pure policy
+#   advanced_hybrid — indirect phrasing, multi-entity, implicit references
 # ─────────────────────────────────────────────────────────────
 
 benchmark = [
 
-    # ── ORIGINAL (regression) ────────────────────────────────
+    # ── BASIC SQL ─────────────────────────────────────────────
+    # Straightforward data questions with one clear signal.
 
-    # SQL
-    ("كم عدد الموظفين في قسم الهندسة؟", "SQL"),
-    ("ما هو راتب سارة الخالدي؟", "SQL"),
-    ("كم عدد الموظفين الذين يتقاضون أكثر من 10000؟", "SQL"),
-    ("ما هي الأقسام الموجودة في الشركة؟", "SQL"),
-    ("من هو الموظف الأعلى راتباً؟", "SQL"),
+    ("كم عدد الموظفين في قسم الهندسة؟",                    "SQL"),  # count
+    ("ما هو راتب سارة الخالدي؟",                           "SQL"),  # single record lookup
+    ("كم عدد الموظفين الذين يتقاضون أكثر من 10000؟",       "SQL"),  # filtered count
+    ("ما هي الأقسام الموجودة في الشركة؟",                   "SQL"),  # list of values
+    ("أعطني قائمة بجميع الموظفين ورواتبهم",                 "SQL"),  # full data dump
+    ("ما هو متوسط راتب موظفي الشركة؟",                     "SQL"),  # aggregation
 
-    # RAG
-    ("هل يمكن للموظفين العمل عن بُعد؟", "RAG"),
-    ("كم يوماً يمكن لموظفي الهندسة العمل من المنزل؟", "RAG"),
-    ("من يوافق على طلبات العمل عن بُعد؟", "RAG"),
-    ("هل قسم المالية مؤهل للعمل عن بُعد؟", "RAG"),
-    ("ما هي سياسة الحضور لقسم الموارد البشرية؟", "RAG"),
+    # ── BASIC RAG ─────────────────────────────────────────────
+    # Straightforward policy questions with one clear signal.
 
-    # HYBRID
-    ("كم عدد موظفي الهندسة وما هي سياسة عملهم عن بُعد؟", "HYBRID"),
-    ("ما هو راتب موظفي المالية وهل يحق لهم العمل عن بُعد؟", "HYBRID"),
-    ("كم عدد الموظفين في قسم الموارد البشرية وكم يوماً يجب أن يكونوا في المكتب؟", "HYBRID"),
+    ("هل يمكن للموظفين العمل عن بُعد؟",                    "RAG"),  # general policy
+    ("من يوافق على طلبات العمل عن بُعد؟",                  "RAG"),  # approval process
+    ("ما هي سياسة العمل عن بعد لجميع الأقسام؟",            "RAG"),  # full policy overview
+    ("هل يحتاج الموظف إلى موافقة مسبقة للعمل عن بعد؟",    "RAG"),  # policy rule
+    ("ما هي أيام عمل الشركة الرسمية؟",                     "RAG"),  # work week policy
 
-    # ── HARD: SQL ─────────────────────────────────────────────
-    # These return a person's name as the answer.
-    # The classifier previously misrouted these to HYBRID.
+    # ── BASIC HYBRID ──────────────────────────────────────────
+    # Clear person + policy — needs both sources, no ambiguity.
 
-    ("من يعمل في قسم الهندسة؟", "SQL"),                          # answer = list of names
-    ("من هو الموظف الأقل راتباً؟", "SQL"),                        # ranking, answer = a name
-    ("أعطني قائمة بجميع الموظفين ورواتبهم", "SQL"),               # pure data dump
-    ("ما هو متوسط راتب موظفي الشركة؟", "SQL"),                    # aggregation, no policy involved
-    ("هل راتب موظفي الهندسة أعلى من موظفي الموارد البشرية؟", "SQL"), # comparison between two groups, pure data
+    ("هل يسمح لخالد الراشد العمل عن بعد؟",                 "HYBRID"),  # Khalid → Finance → not eligible
+    ("هل يسمح لأحمد المنصوري العمل عن بعد؟",               "HYBRID"),  # Ahmed → HR → 1 day
+    ("هل يسمح لسارة الخالدي العمل عن بعد؟",                "HYBRID"),  # Sara → Engineering → 3 days
+    ("هل يسمح لعمر فاروق العمل عن بعد؟",                   "HYBRID"),  # Omar → HR → 1 day
 
-    # ── HARD: RAG ─────────────────────────────────────────────
-    # These mention a department but ask about policy only.
-    # No specific individual is referenced — answer comes from
-    # the policy document alone, not the database.
+    # ── ADVANCED SQL ──────────────────────────────────────────
+    # These look like they might need policy but are pure data.
+    # Main risk: classifier picks HYBRID because the answer is a name
+    # or the question involves a comparison between departments.
 
-    ("هل يحتاج الموظف إلى موافقة مسبقة للعمل عن بعد؟", "RAG"),   # pure policy rule
-    ("هل هناك أقسام لا يُسمح لها بالعمل عن بعد إطلاقاً؟", "RAG"),  # policy comparison across departments
+    ("من هو الموظف الأعلى راتباً؟",                        "SQL"),  # answer is a name — HYBRID risk
+    ("من هو الموظف الأقل راتباً؟",                         "SQL"),  # answer is a name — HYBRID risk
+    ("من يعمل في قسم الهندسة؟",                            "SQL"),  # answer is a list of names
+    ("من يعمل في قسم الموارد البشرية؟",                    "SQL"),  # answer is a list of names
+    ("هل راتب موظفي الهندسة أعلى من موظفي الموارد البشرية؟","SQL"),  # dept comparison, pure data
+    ("ما هو أعلى راتب في قسم المالية؟",                    "SQL"),  # dept-specific ranking
+    ("كم عدد الموظفين في كل قسم؟",                         "SQL"),  # grouped count, no policy
+    ("من هو الموظف الأعلى راتباً في قسم الموارد البشرية؟", "SQL"),  # ranking within dept — HYBRID risk
+
+    # ── ADVANCED RAG ──────────────────────────────────────────
+    # These mention departments or scenarios that sound data-related
+    # but the answer comes entirely from the policy document.
+    # Main risk: classifier picks HYBRID because a department is named.
+
+    ("هل قسم المالية مؤهل للعمل عن بُعد؟",                 "RAG"),  # dept named, but pure policy
+    ("كم يوماً يمكن لموظفي الهندسة العمل من المنزل؟",      "RAG"),  # dept named, answer is in policy
+    ("ما هي سياسة الحضور لقسم الموارد البشرية؟",           "RAG"),  # dept named, pure policy
+    ("هل هناك أقسام لا يُسمح لها بالعمل عن بعد إطلاقاً؟", "RAG"),  # policy comparison, no individual
     ("هل يمكن لموظفي الموارد البشرية العمل من المنزل يوم الأحد؟", "RAG"),  # dept + day, no individual
-    ("ما هي سياسة العمل عن بعد لجميع الأقسام؟", "RAG"),           # full policy overview
+    ("هل يمكن لموظفي الهندسة العمل من المنزل طوال أيام الأسبوع؟", "RAG"),  # policy limit check, no individual
+    ("ما الفرق بين سياسة العمل عن بعد لقسم الهندسة وقسم الموارد البشرية؟", "RAG"),  # policy comparison between depts
 
-    # ── HARD: HYBRID ──────────────────────────────────────────
-    # Mix of forward (person → policy) and reverse (policy → person).
-    # Also tests indirect phrasing and multi-hop reasoning.
+    # ── ADVANCED HYBRID ───────────────────────────────────────
+    # Indirect phrasing, implicit references, multi-entity,
+    # and reverse direction (policy → find who qualifies).
+    # These are the hardest cases for both the classifier and blend step.
 
-    # Forward: SQL finds person's dept, RAG applies the rule
-    ("هل يسمح لأحمد المنصوري العمل عن بعد؟", "HYBRID"),           # Ahmed is HR
-    ("هل يسمح لعمر فاروق العمل عن بعد؟", "HYBRID"),               # Omar is HR
-    ("هل يمكن لسارة الخالدي العمل من المنزل ثلاثة أيام في الأسبوع؟", "HYBRID"),  # Sara is Engineering → yes, exactly 3
+    # Reverse direction: policy defines the rule, SQL finds who matches
+    ("من هم الموظفون الذين يستطيعون العمل من المنزل؟",      "HYBRID"),  # Engineering eligible → find Engineering employees
+    ("كم عدد الموظفين المؤهلين للعمل عن بعد؟",             "HYBRID"),  # eligibility rule → count matching employees
+    ("من هم الموظفون غير المؤهلين للعمل عن بعد؟",          "HYBRID"),  # Finance not eligible → find Finance employees
 
-    # Reverse: RAG gives the eligibility rule, SQL finds who qualifies
-    ("من هم الموظفون الذين يستطيعون العمل من المنزل؟", "HYBRID"),   # RAG: Engineering eligible → SQL: who is in Engineering
-    ("كم عدد الموظفين المؤهلين للعمل عن بعد؟", "HYBRID"),          # RAG: rule → SQL: count matching employees
+    # Indirect reference: person implied, not explicitly named
+    ("هل يمكن لموظفة ليلى حسن العمل من المنزل ثلاثة أيام في الأسبوع؟", "HYBRID"),  # Layla → Engineering → exactly 3, true
+    ("هل يمكن لسارة الخالدي العمل من المنزل ثلاثة أيام في الأسبوع؟",   "HYBRID"),  # Sara → Engineering → yes, exactly 3
 
-    # Multi-step: needs SQL for data AND policy for eligibility, combined answer
-    ("من هو الموظف الأعلى راتباً في قسم الهندسة وهل يحق له العمل عن بعد؟", "HYBRID"),
+    # Multi-entity: involves two people
+    ("هل يملك أحمد المنصوري وعمر فاروق نفس سياسة العمل عن بعد؟", "HYBRID"),  # both HR → same policy
+
+    # Comparative across people
+    ("من لديه المزيد من أيام العمل عن بعد، سارة الخالدي أم أحمد المنصوري؟", "HYBRID"),  # Engineering vs HR policy
+
+    # Multi-step: ranking + policy
+    ("من هو الموظف الأعلى راتباً في قسم الهندسة وهل يحق له العمل عن بعد؟", "HYBRID"),  # SQL for ranking, RAG for eligibility
 ]
 
 
 def run_benchmark():
     results = []
     correct = 0
-    original_count = 13  # number of original queries kept for regression tracking
 
-    print("=" * 60)
+    groups = [
+        "basic_sql", "basic_rag", "basic_hybrid",
+        "advanced_sql", "advanced_rag", "advanced_hybrid"
+    ]
+
+    group_sizes = [6, 5, 4, 8, 7, 8]
+    group_labels = []
+    for group, size in zip(groups, group_sizes):
+        group_labels.extend([group] * size)
+
+    print("=" * 65)
     print("Running benchmark...")
-    print("=" * 60)
+    print("=" * 65)
 
+    current_group = None
     for i, (query, expected) in enumerate(benchmark):
+        group = group_labels[i]
+
+        if group != current_group:
+            current_group = group
+            print(f"\n── {group.upper()} {'─' * (50 - len(group))}")
+
         predicted = classify_query(query)
         is_correct = predicted == expected
         if is_correct:
             correct += 1
 
-        tag = "[original]" if i < original_count else "[hard]"
         results.append({
             "query": query,
             "expected": expected,
             "predicted": predicted,
             "correct": is_correct,
-            "difficulty": "original" if i < original_count else "hard"
+            "group": group
         })
 
         status = "✓" if is_correct else "✗"
-        print(f"\n{status} {tag} {query}")
-        print(f"   Expected: {expected} | Predicted: {predicted}")
+        print(f"\n  {status} {query}")
+        print(f"     Expected: {expected} | Got: {predicted}")
 
     total = len(benchmark)
-    original_results = [r for r in results if r["difficulty"] == "original"]
-    hard_results     = [r for r in results if r["difficulty"] == "hard"]
 
-    def accuracy(subset):
-        if not subset:
-            return 0
-        return sum(1 for r in subset if r["correct"]) / len(subset) * 100
+    print("\n" + "=" * 65)
+    print(f"OVERALL: {correct}/{total} ({correct/total*100:.1f}%)\n")
 
-    def route_breakdown(subset, route_name):
-        total_r  = sum(1 for r in subset if r["expected"] == route_name)
-        correct_r = sum(1 for r in subset if r["expected"] == route_name and r["correct"])
-        return f"{correct_r}/{total_r}"
+    for group in groups:
+        subset = [r for r in results if r["group"] == group]
+        g_correct = sum(1 for r in subset if r["correct"])
+        print(f"  {group:<20} {g_correct}/{len(subset)} ({g_correct/len(subset)*100:.1f}%)")
 
-    print("\n" + "=" * 60)
-    print(f"OVERALL:  {correct}/{total} correct ({accuracy(results):.1f}%)")
-    print(f"Original: {sum(r['correct'] for r in original_results)}/{len(original_results)} ({accuracy(original_results):.1f}%)")
-    print(f"Hard:     {sum(r['correct'] for r in hard_results)}/{len(hard_results)} ({accuracy(hard_results):.1f}%)")
-    print()
-    print("Route breakdown (all queries):")
+    print("\nRoute breakdown:")
     for route_name in ["SQL", "RAG", "HYBRID"]:
-        print(f"  {route_name}:    {route_breakdown(results, route_name)} correct")
-    print()
-    print("Route breakdown (hard only):")
-    for route_name in ["SQL", "RAG", "HYBRID"]:
-        print(f"  {route_name}:    {route_breakdown(hard_results, route_name)} correct")
-    print("=" * 60)
+        subset = [r for r in results if r["expected"] == route_name]
+        r_correct = sum(1 for r in subset if r["correct"])
+        print(f"  {route_name:<10} {r_correct}/{len(subset)} correct")
+
+    print("=" * 65)
 
     with open("benchmark_results.json", "w", encoding="utf-8") as f:
         json.dump({
-            "overall_accuracy": accuracy(results),
-            "original_accuracy": accuracy(original_results),
-            "hard_accuracy": accuracy(hard_results),
+            "overall_accuracy": correct / total * 100,
             "correct": correct,
             "total": total,
+            "by_group": {
+                group: {
+                    "correct": sum(1 for r in results if r["group"] == group and r["correct"]),
+                    "total": sum(1 for r in results if r["group"] == group),
+                }
+                for group in groups
+            },
             "results": results
         }, f, ensure_ascii=False, indent=2)
 
-    print("\nDetailed results saved to benchmark_results.json")
+    print("\nResults saved to benchmark_results.json")
 
 
 if __name__ == "__main__":
     run_benchmark()
-    
