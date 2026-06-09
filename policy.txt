@@ -1,11 +1,10 @@
+سياسة أسبوع العمل:
+يمتد أسبوع العمل الرسمي من الأحد إلى الخميس.
+الجمعة والسبت هما يوما العطلة الرسمية.
 
-        Work Week Policy:
-        The standard work week runs from Sunday to Thursday.
-        Friday and Saturday are the official weekend days.
-
-        Remote Work Policy:
-        Employees in Engineering are eligible for 3 remote days per week.
-        Employees in HR must be on-site at least 4 days per week.
-        Employees in Finance are not eligible for remote work.
-        All remote work requests must be approved by the department head.
+سياسة العمل عن بعد:
+موظفو قسم الهندسة مؤهلون للعمل عن بعد 3 أيام في الأسبوع.
+موظفو قسم الموارد البشرية مؤهلون للعمل عن بعد يوماً واحداً في الأسبوع كحد أقصى، ويجب أن يكونوا حاضرين في المقر 4 أيام على الأقل.
+موظفو قسم المالية غير مؤهلين للعمل عن بعد، ويجب الحضور في المقر كل أيام العمل.
+جميع طلبات العمل عن بعد تستوجب موافقة رئيس القسم.
         

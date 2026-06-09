@@ -1,7 +1,9 @@
+import os
 import streamlit as st
 import sqlite3
 import pandas as pd
 from router import route, classify_query
+from config import config
 
 st.set_page_config(page_title="Arabic Query Agent", layout="centered")
 
@@ -23,11 +25,13 @@ with tab1:
 
 with tab2:
     st.subheader("Employees Database")
-    conn = sqlite3.connect("company.db")
+    conn = sqlite3.connect(config["database"]["path"])
     df = pd.read_sql("SELECT * FROM employees", conn)
     conn.close()
     st.dataframe(df)
 
     st.subheader("Remote Work Policy")
-    with open("policy.txt", "r", encoding="utf-8") as f:
-        st.text(f.read())
+    for filename in config["documents"]["files"]:
+        path = os.path.join(config["documents"]["dir"], filename)
+        with open(path, "r", encoding="utf-8") as f:
+            st.text(f.read())

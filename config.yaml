@@ -1,0 +1,12 @@
+# config.yaml
+# P18 and P20 only need to change this file — nothing else.
+
+database:
+  path: "company.db"          # path to the SQLite file (must already exist)
+  seed_demo_data: true       # set to false in production / for other projects
+
+documents:
+  dir: "."                    # folder where your .txt policy files live
+  files:
+    - "policy.txt"            # list the specific files to load
+  seed_demo_data: false        # set to false in production

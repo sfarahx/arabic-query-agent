@@ -66,8 +66,15 @@ Query: {query}"""
         if not output:
             return "لم يتم العثور على نتائج في قاعدة البيانات."
 
-        return output
+        # Detect if original query was in Arabic
+        is_arabic = any('\u0600' <= c <= '\u06FF' for c in query)
 
+        if is_arabic:
+            translate_prompt = f"Translate the following to Arabic. Return only the translation, nothing else:\n{output}"
+            return _llm.invoke(translate_prompt).content.strip()
+
+        return output
+    
     except Exception as e:
         print(f"[SQL] Exception: {type(e).__name__}: {e}")
         return "لم يتم العثور على نتائج مطابقة في قاعدة البيانات."

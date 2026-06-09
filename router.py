@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import os
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from sql_demo import run_sql_agent
@@ -19,6 +20,9 @@ _EMPTY_SIGNALS = [
     "cannot answer",
     "can't answer",
     "insufficient",
+    "i was unable to find",
+    "not available in the database",
+    "no record",
     "لا أعرف",
     "لا توجد معلومات",
     "لا يمكنني",
@@ -63,14 +67,12 @@ Question: {query}"""
     return decision if decision in ["SQL", "RAG", "HYBRID"] else "HYBRID"
 
 def _reframe_as_data_fetch(query: str) -> str:
-    """
-    Rewrite the user's question into a pure data-retrieval task before sending
-    to the SQL agent. This prevents the agent from returning "I don't know"
-    when it finds factual data but can't answer the policy part of the question.
-    """
     prompt = f"""You are a query rewriter for a database retrieval system.
 Rewrite the question below into a plain data-fetch request in English.
-- Extract only the factual information needed from the database (names, departments, roles, salaries, etc.)
+- Extract only the employee's name and department from the database
+- Do not ask for salaries, roles, work arrangements, or anything not stored as basic structured data
+- Do not ask for policies — those will be handled separately
+- Always include department so that policy eligibility can be evaluated later
 - Remove any policy, eligibility, or permission questions — those will be answered separately
 - Return only the rewritten English query, nothing else
 
@@ -115,8 +117,8 @@ def run_hybrid(query: str) -> str:
 
     # If one source failed, answer from the other alone and be transparent about it
     if sql_empty:
-        print("[Hybrid] SQL returned no results — answering from RAG only")
-        return rag_result + "\n\n(ملاحظة: لم يتم العثور على بيانات مطابقة في قاعدة البيانات)"
+        print("[Hybrid] SQL returned no results — person not found")
+        return "لم يتم العثور على هذا الموظف في قاعدة البيانات."
 
     if rag_empty:
         print("[Hybrid] RAG returned no results — answering from SQL only")
@@ -134,12 +136,13 @@ Policy/document information:
 {rag_result}
 
 Instructions:
-- Reason over BOTH sources together to form a complete answer
-- The database may tell you facts about a person (e.g. their department)
-- The policy may tell you rules that apply to that fact (e.g. what that department is allowed)
-- Or the policy may define criteria and the database may tell you who meets them
-- Work out the answer by combining both — do not rely on either source alone
-- Answer in the same language as the question"""
+- Use both sources to determine the correct answer
+- The database tells you facts (e.g. who is in which department)
+- The policy tells you rules (e.g. which departments are eligible for what)
+- Combine them to reach the answer, then return ONLY the final answer — no bullet points, no breakdown by department, no explanation of how you reached it
+- Answer in the same language as the question
+- If the database records do not mention the specific person asked about, respond only with: "لم يتم العثور على هذا الموظف في قاعدة البيانات." and nothing else
+- Do not infer, assume, or use partial data to answer about a specific person"""
 
     return llm.invoke(blend_prompt).content
 
