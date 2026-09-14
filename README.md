@@ -1,4 +1,4 @@
-# Arabic Query Agent
+# Arabic Query Agent 
 **QCRI LLM Lab, Summer 2026**
 
 An Arabic natural language query agent that classifies incoming questions and routes them to the appropriate answering pipeline: SQL, RAG, or a hybrid of both. Designed as generic, schema-agnostic infrastructure intended for use across multiple projects.
@@ -30,8 +30,8 @@ Arabic question
 ```
 
 - **SQL** — translates the query to English, then uses a LangChain SQL agent to query SQLite (structured data: records, counts, rankings).
-- **RAG** — translates to English (embedding model is English-only), retrieves relevant chunks from a ChromaDB vector store (policy/document context).
-- **HYBRID** — reframes the query twice (SQL reframe strips policy questions; RAG reframe strips names), runs both pipelines in parallel, then blends the results into one answer.
+- **RAG** — retrieves relevant chunks directly on the Arabic query using a multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`), no translation step (policy/document context).
+- **HYBRID** — reframes the query twice (SQL reframe strips policy questions; RAG reframe strips names), runs both pipelines in parallel, then blends the results into one answer. If one or both sources return an empty/unhelpful result, falls back gracefully instead of blending garbage.
 
 ---
 
@@ -39,13 +39,15 @@ Arabic question
 
 ```
 arabic-query-agent/
-├── app.py           # Streamlit UI with RTL Arabic support
-├── router.py        # Classifier, reframers, hybrid orchestration
+├── app.py           # Streamlit UI (RTL Arabic support, plus a Data tab for browsing the DB/policy)
+├── router.py        # Classifier, reframers, hybrid orchestration, empty-result handling
 ├── sql_demo.py      # SQL agent (SQLite + LangChain)
 ├── rag_demo.py      # RAG pipeline (ChromaDB + HuggingFace embeddings)
+├── config.py        # Loads config.yaml
+├── config.yaml       # DB path and documents folder/files — used by rag_demo.py and app.py
 ├── benchmark.py     # Routing accuracy evaluation
 ├── company.db       # Demo SQLite database (employees table)
-└── policy.txt        # Auto-generated on startup from rag_demo.py
+└── policy.txt        # Auto-generated on startup from rag_demo.py (opt-in via config)
 ```
 
 ---
@@ -81,11 +83,9 @@ Results are saved to `benchmark_results.json` with per-tier and per-route breakd
 
 ---
 
-## Limitations & Planned Improvements
+## Known Limitations
 
-- **Embedding model is English-only** (`all-MiniLM-L6-v2`) — queries are translated as a workaround. Planned fix: swap to `paraphrase-multilingual-MiniLM-L12-v2`.
 - **Name transliteration inconsistency** — Arabic names can transliterate differently (e.g. ليلى → Leila/Layla), which may cause SQL lookups to miss records.
-- **Hardcoded data sources** — DB path and documents folder are fixed in `sql_demo.py`/`rag_demo.py`. Externalizing via config file is planned, along with removing the hardcoded `_setup_database()` so the agent connects to existing DBs.
-- **No error handling** for empty SQL/RAG results — needs graceful fallback.
+- **Config externalization is only half done** — `rag_demo.py` and `app.py` read DB/document paths from `config.yaml`, but `sql_demo.py` is still hardcoded to `company.db` and still runs `_setup_database()` on every startup, recreating the demo table. Pointing it at `config.py` and dropping `_setup_database()` is still pending.
 - **Parallel-only HYBRID** — SQL and RAG run independently with no dependency between them; multi-step reasoning (one feeding the other) isn't supported yet.
 - **Groq free tier** — 100,000 tokens/day; running the full benchmark uses a significant chunk of that.
